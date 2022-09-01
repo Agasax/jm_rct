@@ -1,0 +1,56 @@
+---
+title: "JM for RCT"
+author: "Lars Mølgaard Saxhaug"
+date: "`r Sys.Date()`"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(rstanarm) # devtools::install_github("stan-dev/rstanarm", ref = "feature/survival", build_vignettes = FALSE)
+library(tidybayes)
+library(rio)
+library(here)
+```
+
+```{r import}
+survival_data <- import(here("data/VPA_SURVIVAL_dataset.xlsx")) |> 
+  janitor::clean_names()
+str(survival_data)
+head(survival_data)
+
+long_data <- import(here("data/VPA_ALSFRS_dataset.xlsx")) |> 
+  janitor::clean_names()
+str(long_data)
+head(long_data)
+
+```
+
+```{r rstanarm_fitting}
+if (file.exists(here("output/fits/model1.Rdata"))) {
+  model1 <- import(here("output/fits/model1.Rdata"))
+  
+} else {
+  model1 <-
+    stan_jm(
+      formulaLong = total ~ avisit + avisit:trt + (avisit + I(avisit ^ 2) |
+                                                     id),
+      dataLong = long_data,
+      formulaEvent = Surv(stime, status) ~ trt,
+      dataEvent = survival_data,
+      time_var = "avisit",
+      priorEvent = rstanarm::normal(0, 1),
+      iter = 4000
+    )
+  save(model1, file = here("output/fits/model1.Rdata"))
+  
+}
+
+```
+
+```{r ps_check}
+ps_check(model1)
+
+```
+
