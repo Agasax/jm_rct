@@ -1,8 +1,9 @@
 ---
-title: "JM for RCT"
+title: "Joint modeling of endpoints for RCT"
 author: "Lars Mølgaard Saxhaug"
 date: "`r Sys.Date()`"
 output: github_document
+bibliography: references.bib
 ---
 
 ```{r setup, include=FALSE}
@@ -13,6 +14,8 @@ library(tidybayes)
 library(rio)
 library(here)
 ```
+
+Recreation of analysis from ["Joint modeling of endpoints can be used to answer various research questions in randomized clinical trials"](https://www.sciencedirect.com/science/article/pii/S0895435622000701#bib33) [@vaneijk2022] using {rstanarm}[@rstanarm]
 
 ```{r import}
 survival_data <- import(here("data/VPA_SURVIVAL_dataset.xlsx")) |> 
@@ -28,19 +31,19 @@ head(long_data)
 ```
 
 ```{r rstanarm_fitting}
-if (file.exists(here("output/fits/model1.Rdata"))) {
+# check if file exists, only run model if it does not
+if (file.exists(here("output/fits/model1.Rdata"))) { 
   model1 <- import(here("output/fits/model1.Rdata"))
   
 } else {
   model1 <-
     stan_jm(
-      formulaLong = total ~ avisit + avisit:trt + (avisit + I(avisit ^ 2) |
-                                                     id),
+      formulaLong = total ~ avisit + avisit:trt + (avisit + I(avisit ^ 2) | id), # longitudinal mixed effects model
       dataLong = long_data,
-      formulaEvent = Surv(stime, status) ~ trt,
+      formulaEvent = Surv(stime, status) ~ trt, # survival model 
       dataEvent = survival_data,
       time_var = "avisit",
-      priorEvent = rstanarm::normal(0, 1),
+      priorEvent = rstanarm::normal(0, 1), # prior on treatment effect in survival model
       iter = 4000
     )
   save(model1, file = here("output/fits/model1.Rdata"))
@@ -49,8 +52,15 @@ if (file.exists(here("output/fits/model1.Rdata"))) {
 
 ```
 
+```{r piror summary}
+prior_summary(model1) # 
+```
+
+```{r summary of model}
+summary(model1)
+```
+
 ```{r ps_check}
 ps_check(model1)
 
 ```
-
