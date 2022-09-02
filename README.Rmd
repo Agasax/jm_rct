@@ -44,7 +44,8 @@ if (file.exists(here("output/fits/model1.Rdata"))) {
       dataEvent = survival_data,
       time_var = "avisit",
       priorEvent = rstanarm::normal(0, 1), # prior on treatment effect in survival model
-      iter = 4000
+      iter = 4000,
+      adapt_delta = 0.99
     )
   save(model1, file = here("output/fits/model1.Rdata"))
   
@@ -59,8 +60,47 @@ prior_summary(model1) #
 ```{r summary of model}
 summary(model1)
 ```
+#### Diagnostics
+```{r}
+bayesplot::mcmc_trace(model1,regex_pars = "Sigma.*")
+bayesplot::mcmc_nuts_divergence(bayesplot::nuts_params(model1),bayesplot::log_posterior(model1))
+
+```
+
+
+
+#### Posterior predictive check of survival
 
 ```{r ps_check}
 ps_check(model1)
 
 ```
+
+#### Plot of survival probabilities conditional on treatment
+
+Averaging across individual-specific predictions within each treatment group, derived from
+
+<https://discourse.mc-stan.org/t/survival-predictions-by-categorical-covariates-in-stan-jm/9516/4>
+
+```{r surv_plot_data, cache=TRUE}
+id0 <- survival_data$id[survival_data$trt==0]
+id1 <- survival_data$id[survival_data$trt==1]
+p0 <- posterior_survfit(model1, ids = id0, standardise = TRUE, times = 0 )
+p1 <- posterior_survfit(model1, ids = id1, standardise = TRUE, times = 0 )
+
+p0 |> as_tibble() |> 
+  mutate(trt=0) |> 
+  bind_rows(p1 |> 
+              mutate(trt=1)) |> 
+  ggplot(aes(x=avisit,y=median,fill=factor(trt),colour=factor(trt)))+
+  geom_line()+
+  geom_ribbon(aes(ymin=ci_lb,ymax=ci_ub),alpha=0.4,colour=NA)+
+  scale_y_continuous(name = "Survival")+
+  scale_colour_manual(values = c("pink","steelblue"))+
+  scale_fill_manual(values = c("pink","steelblue"))+
+  labs(fill="Treatment group",colour="Treatment group")+
+  theme_tidybayes()
+
+```
+
+#### Bibliography

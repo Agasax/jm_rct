@@ -1,7 +1,7 @@
 Joint modeling of endpoints for RCT
 ================
 Lars Mølgaard Saxhaug
-2022-09-01
+2022-09-02
 
 Recreation of analysis from [“Joint modeling of endpoints can be used to
 answer various research questions in randomized clinical
@@ -76,7 +76,8 @@ if (file.exists(here("output/fits/model1.Rdata"))) {
       dataEvent = survival_data,
       time_var = "avisit",
       priorEvent = rstanarm::normal(0, 1), # prior on treatment effect in survival model
-      iter = 4000
+      iter = 4000,
+      adapt_delta = 0.99
     )
   save(model1, file = here("output/fits/model1.Rdata"))
   
@@ -117,7 +118,7 @@ prior_summary(model1) #
     ##   Specified prior:
     ##     ~ normal(location = 0, scale = 2.5)
     ##   Adjusted prior:
-    ##     ~ normal(location = 0, scale = 0.29)
+    ##     ~ normal(location = 0, scale = 0.27)
     ## 
     ## Covariance
     ##  ~ lkj(reg. = 1, df = [1,1,1], scale = [10,10,10])
@@ -145,85 +146,132 @@ summary(model1)
     ##  subjects:         154
     ##  events:           33 (21.4%)
     ##  groups:           id (154)
-    ##  runtime:          20.6 mins
+    ##  runtime:          44.1 mins
     ## 
     ## Estimates:
     ##                                                 mean      sd        10%    
-    ## Long1|(Intercept)                                40.071     0.461    39.490
-    ## Long1|avisit                                     -0.966     0.086    -1.076
-    ## Long1|avisit:trt                                 -0.117     0.120    -0.272
-    ## Long1|sigma                                       2.093     0.088     1.982
-    ## Long1|mean_PPD                                   34.660     0.112    34.516
-    ## Event|(Intercept)                                -1.608     0.625    -2.403
-    ## Event|trt                                         0.529     0.339     0.102
-    ## Event|b-splines-coef1                           -14.578     8.014   -25.245
-    ## Event|b-splines-coef2                             1.614     2.374    -1.339
-    ## Event|b-splines-coef3                            -0.719     1.472    -2.582
-    ## Event|b-splines-coef4                            -0.784     1.244    -2.394
-    ## Event|b-splines-coef5                             1.750     1.545    -0.236
-    ## Event|b-splines-coef6                            -3.691     2.851    -7.390
-    ## Assoc|Long1|etavalue                             -0.082     0.018    -0.105
-    ## Sigma[id:Long1|(Intercept),Long1|(Intercept)]    28.912     3.666    24.448
-    ## Sigma[id:Long1|avisit,Long1|(Intercept)]          2.077     0.515     1.424
+    ## Long1|(Intercept)                                40.083     0.458    39.499
+    ## Long1|avisit                                     -0.969     0.087    -1.082
+    ## Long1|avisit:trt                                 -0.116     0.118    -0.268
+    ## Long1|sigma                                       2.095     0.088     1.985
+    ## Long1|mean_PPD                                   34.659     0.111    34.517
+    ## Event|(Intercept)                                -1.608     0.617    -2.394
+    ## Event|trt                                         0.525     0.338     0.093
+    ## Event|b-splines-coef1                           -14.424     7.796   -25.053
+    ## Event|b-splines-coef2                             1.584     2.382    -1.371
+    ## Event|b-splines-coef3                            -0.700     1.469    -2.609
+    ## Event|b-splines-coef4                            -0.804     1.253    -2.418
+    ## Event|b-splines-coef5                             1.758     1.522    -0.167
+    ## Event|b-splines-coef6                            -3.733     2.889    -7.575
+    ## Assoc|Long1|etavalue                             -0.082     0.018    -0.106
+    ## Sigma[id:Long1|(Intercept),Long1|(Intercept)]    28.899     3.741    24.374
+    ## Sigma[id:Long1|avisit,Long1|(Intercept)]          2.092     0.520     1.443
     ## Sigma[id:Long1|I(avisit^2),Long1|(Intercept)]    -0.095     0.024    -0.126
-    ## Sigma[id:Long1|avisit,Long1|avisit]               0.857     0.172     0.647
-    ## Sigma[id:Long1|I(avisit^2),Long1|avisit]         -0.023     0.008    -0.034
+    ## Sigma[id:Long1|avisit,Long1|avisit]               0.848     0.177     0.633
+    ## Sigma[id:Long1|I(avisit^2),Long1|avisit]         -0.023     0.009    -0.034
     ## Sigma[id:Long1|I(avisit^2),Long1|I(avisit^2)]     0.001     0.000     0.001
-    ## log-posterior                                 -2350.503    27.843 -2386.214
+    ## log-posterior                                 -2351.737    27.275 -2386.440
     ##                                                 50%       90%    
-    ## Long1|(Intercept)                                40.075    40.658
-    ## Long1|avisit                                     -0.964    -0.858
-    ## Long1|avisit:trt                                 -0.116     0.037
-    ## Long1|sigma                                       2.091     2.206
-    ## Long1|mean_PPD                                   34.660    34.801
-    ## Event|(Intercept)                                -1.605    -0.815
-    ## Event|trt                                         0.524     0.967
-    ## Event|b-splines-coef1                           -13.263    -5.556
-    ## Event|b-splines-coef2                             1.504     4.673
-    ## Event|b-splines-coef3                            -0.693     1.126
-    ## Event|b-splines-coef4                            -0.772     0.814
-    ## Event|b-splines-coef5                             1.751     3.750
-    ## Event|b-splines-coef6                            -3.348    -0.401
+    ## Long1|(Intercept)                                40.071    40.688
+    ## Long1|avisit                                     -0.968    -0.859
+    ## Long1|avisit:trt                                 -0.116     0.033
+    ## Long1|sigma                                       2.091     2.209
+    ## Long1|mean_PPD                                   34.658    34.802
+    ## Event|(Intercept)                                -1.610    -0.807
+    ## Event|trt                                         0.524     0.955
+    ## Event|b-splines-coef1                           -13.187    -5.498
+    ## Event|b-splines-coef2                             1.488     4.615
+    ## Event|b-splines-coef3                            -0.660     1.146
+    ## Event|b-splines-coef4                            -0.780     0.792
+    ## Event|b-splines-coef5                             1.738     3.733
+    ## Event|b-splines-coef6                            -3.355    -0.352
     ## Assoc|Long1|etavalue                             -0.082    -0.059
-    ## Sigma[id:Long1|(Intercept),Long1|(Intercept)]    28.657    33.820
-    ## Sigma[id:Long1|avisit,Long1|(Intercept)]          2.063     2.745
+    ## Sigma[id:Long1|(Intercept),Long1|(Intercept)]    28.570    33.776
+    ## Sigma[id:Long1|avisit,Long1|(Intercept)]          2.067     2.771
     ## Sigma[id:Long1|I(avisit^2),Long1|(Intercept)]    -0.094    -0.065
-    ## Sigma[id:Long1|avisit,Long1|avisit]               0.844     1.080
-    ## Sigma[id:Long1|I(avisit^2),Long1|avisit]         -0.022    -0.013
+    ## Sigma[id:Long1|avisit,Long1|avisit]               0.834     1.079
+    ## Sigma[id:Long1|I(avisit^2),Long1|avisit]         -0.022    -0.012
     ## Sigma[id:Long1|I(avisit^2),Long1|I(avisit^2)]     0.001     0.002
-    ## log-posterior                                 -2350.161 -2314.674
+    ## log-posterior                                 -2351.968 -2316.329
     ## 
     ## Diagnostics:
     ##                                               mcse  Rhat  n_eff
-    ## Long1|(Intercept)                             0.012 1.001  1478
-    ## Long1|avisit                                  0.001 1.000  4062
-    ## Long1|avisit:trt                              0.002 1.000  5123
-    ## Long1|sigma                                   0.002 1.004  1729
-    ## Long1|mean_PPD                                0.001 1.000  7737
-    ## Event|(Intercept)                             0.005 1.000 15033
-    ## Event|trt                                     0.003 1.000 14936
-    ## Event|b-splines-coef1                         0.102 1.000  6135
-    ## Event|b-splines-coef2                         0.029 1.000  6539
-    ## Event|b-splines-coef3                         0.018 1.000  6452
-    ## Event|b-splines-coef4                         0.015 1.000  6602
-    ## Event|b-splines-coef5                         0.018 1.000  7206
-    ## Event|b-splines-coef6                         0.032 1.000  8139
-    ## Assoc|Long1|etavalue                          0.000 1.000 14378
-    ## Sigma[id:Long1|(Intercept),Long1|(Intercept)] 0.069 1.001  2782
-    ## Sigma[id:Long1|avisit,Long1|(Intercept)]      0.008 1.001  3952
-    ## Sigma[id:Long1|I(avisit^2),Long1|(Intercept)] 0.000 1.001  5415
-    ## Sigma[id:Long1|avisit,Long1|avisit]           0.004 1.003  1919
-    ## Sigma[id:Long1|I(avisit^2),Long1|avisit]      0.000 1.002  1706
-    ## Sigma[id:Long1|I(avisit^2),Long1|I(avisit^2)] 0.000 1.004  1325
-    ## log-posterior                                 0.920 1.008   917
+    ## Long1|(Intercept)                             0.014 1.004  1103
+    ## Long1|avisit                                  0.002 1.000  2404
+    ## Long1|avisit:trt                              0.002 1.000  3304
+    ## Long1|sigma                                   0.002 1.001  1557
+    ## Long1|mean_PPD                                0.001 1.000  7918
+    ## Event|(Intercept)                             0.005 1.000 14339
+    ## Event|trt                                     0.002 1.000 21717
+    ## Event|b-splines-coef1                         0.109 1.000  5079
+    ## Event|b-splines-coef2                         0.036 1.001  4315
+    ## Event|b-splines-coef3                         0.023 1.000  4090
+    ## Event|b-splines-coef4                         0.019 1.000  4491
+    ## Event|b-splines-coef5                         0.022 1.000  4915
+    ## Event|b-splines-coef6                         0.038 1.000  5936
+    ## Assoc|Long1|etavalue                          0.000 1.000 13782
+    ## Sigma[id:Long1|(Intercept),Long1|(Intercept)] 0.079 1.001  2242
+    ## Sigma[id:Long1|avisit,Long1|(Intercept)]      0.009 1.001  3014
+    ## Sigma[id:Long1|I(avisit^2),Long1|(Intercept)] 0.000 1.001  3902
+    ## Sigma[id:Long1|avisit,Long1|avisit]           0.004 1.001  1661
+    ## Sigma[id:Long1|I(avisit^2),Long1|avisit]      0.000 1.002  1261
+    ## Sigma[id:Long1|I(avisit^2),Long1|I(avisit^2)] 0.000 1.002   974
+    ## log-posterior                                 0.948 1.004   828
     ## 
     ## For each parameter, mcse is Monte Carlo standard error, n_eff is a crude measure of effective sample size, and Rhat is the potential scale reduction factor on split chains (at convergence Rhat=1).
+
+#### Diagnostics
+
+``` r
+bayesplot::mcmc_trace(model1,regex_pars = "Sigma.*")
+```
+
+![](README_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+
+``` r
+bayesplot::mcmc_nuts_divergence(bayesplot::nuts_params(model1),bayesplot::log_posterior(model1))
+```
+
+![](README_files/figure-gfm/unnamed-chunk-1-2.png)<!-- -->
+
+#### Posterior predictive check of survival
 
 ``` r
 ps_check(model1)
 ```
 
 ![](README_files/figure-gfm/ps_check-1.png)<!-- -->
+
+#### Plot of survival probabilities conditional on treatment
+
+Averaging across individual-specific predictions within each treatment
+group, derived from
+
+<https://discourse.mc-stan.org/t/survival-predictions-by-categorical-covariates-in-stan-jm/9516/4>
+
+``` r
+id0 <- survival_data$id[survival_data$trt==0]
+id1 <- survival_data$id[survival_data$trt==1]
+p0 <- posterior_survfit(model1, ids = id0, standardise = TRUE, times = 0 )
+p1 <- posterior_survfit(model1, ids = id1, standardise = TRUE, times = 0 )
+
+p0 |> as_tibble() |> 
+  mutate(trt=0) |> 
+  bind_rows(p1 |> 
+              mutate(trt=1)) |> 
+  ggplot(aes(x=avisit,y=median,fill=factor(trt),colour=factor(trt)))+
+  geom_line()+
+  geom_ribbon(aes(ymin=ci_lb,ymax=ci_ub),alpha=0.4,colour=NA)+
+  scale_y_continuous(name = "Survival")+
+  scale_colour_manual(values = c("pink","steelblue"))+
+  scale_fill_manual(values = c("pink","steelblue"))+
+  labs(fill="Treatment group",colour="Treatment group")+
+  theme_tidybayes()
+```
+
+![](README_files/figure-gfm/surv_plot_data-1.png)<!-- -->
+
+#### Bibliography
 
 <div id="refs" class="references csl-bib-body hanging-indent">
 
